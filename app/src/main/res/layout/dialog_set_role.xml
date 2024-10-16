@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Title: Select Role -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Select Role"
+        android:textStyle="bold"
+        android:paddingBottom="8dp"
+        android:textSize="16sp" />
+
+    <!-- Spinner for roles -->
+    <Spinner
+        android:id="@+id/spinnerRoles"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp" />
+
+    <!-- Set Role button -->
+    <Button
+        android:id="@+id/btnSetRole"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Set Role"
+        android:layout_marginTop="16dp" />
+</LinearLayout>
