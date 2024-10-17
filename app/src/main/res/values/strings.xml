@@ -1,13 +1,13 @@
 <resources>
     <string name="app_name">NewYogaApplication</string>
     <string-array name="days_of_week">
+        <item>Sunday</item>
         <item>Monday</item>
         <item>Tuesday</item>
         <item>Wednesday</item>
         <item>Thursday</item>
         <item>Friday</item>
         <item>Saturday</item>
-        <item>Sunday</item>
     </string-array>
 
     <string-array name="yoga_class_types">

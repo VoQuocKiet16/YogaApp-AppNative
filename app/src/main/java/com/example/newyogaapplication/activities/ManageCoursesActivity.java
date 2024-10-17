@@ -2,6 +2,8 @@ package com.example.newyogaapplication.activities;
 
 import android.app.Dialog;
 import android.app.TimePickerDialog;
+import android.content.IntentFilter;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -20,6 +22,7 @@ import com.example.newyogaapplication.R;
 import com.example.newyogaapplication.classes.YogaCourse;
 import com.example.newyogaapplication.adapters.YogaCourseAdapter;
 import com.example.newyogaapplication.database.YogaCourseDB;
+import com.example.newyogaapplication.utils.NetworkChangeReceiver;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -38,6 +41,7 @@ public class ManageCoursesActivity extends AppCompatActivity {
     List<YogaCourse> courseList;
     FirebaseDatabase firebaseDatabase;
     DatabaseReference classRef;
+    NetworkChangeReceiver networkChangeReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +50,10 @@ public class ManageCoursesActivity extends AppCompatActivity {
 
         recyclerView = findViewById(R.id.recyclerView);
         courseDbHelper = new YogaCourseDB(this);
+
+        networkChangeReceiver = new NetworkChangeReceiver();
+        IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+        registerReceiver(networkChangeReceiver, filter);
 
         // Firebase initialization
         firebaseDatabase = FirebaseDatabase.getInstance("https://thenewyoga-604c0-default-rtdb.asia-southeast1.firebasedatabase.app/");
@@ -63,6 +71,12 @@ public class ManageCoursesActivity extends AppCompatActivity {
         // Button to add course
         Button btnAddCourse = findViewById(R.id.btnAddCourse);
         btnAddCourse.setOnClickListener(v -> showAddCourseDialog());
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(networkChangeReceiver);
     }
 
     // Synchronize Firebase data with local SQLite

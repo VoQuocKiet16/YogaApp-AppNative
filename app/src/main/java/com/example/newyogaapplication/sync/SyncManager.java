@@ -7,7 +7,7 @@ public class SyncManager {
 
     private SyncWorker syncWorker;
     private Handler handler;
-    private final long interval = 5000; //
+    private final long interval = 30000; //
 
     public SyncManager(Context context) {
         syncWorker = new SyncWorker(context);

@@ -1,6 +1,8 @@
 package com.example.newyogaapplication.activities;
 
 import android.app.Dialog;
+import android.content.IntentFilter;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -23,6 +25,7 @@ import com.example.newyogaapplication.database.YogaClassDB;
 import com.example.newyogaapplication.classes.YogaCourse;
 import com.example.newyogaapplication.database.YogaCourseDB;
 import com.example.newyogaapplication.database.YogaUserDB;
+import com.example.newyogaapplication.utils.NetworkChangeReceiver;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -41,6 +44,7 @@ public class ManageClassesActivity extends AppCompatActivity {
     List<YogaClass> classList;
     FirebaseDatabase firebaseDatabase;
     DatabaseReference classRef;
+    NetworkChangeReceiver networkChangeReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +53,10 @@ public class ManageClassesActivity extends AppCompatActivity {
 
         recyclerView = findViewById(R.id.recyclerView);
         dbHelper = new YogaClassDB(this);
+
+        networkChangeReceiver = new NetworkChangeReceiver();
+        IntentFilter intentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+        registerReceiver(networkChangeReceiver, intentFilter);
 
         firebaseDatabase = FirebaseDatabase.getInstance("https://thenewyoga-604c0-default-rtdb.asia-southeast1.firebasedatabase.app/");
         classRef = firebaseDatabase.getReference("yoga_classes");
@@ -93,6 +101,13 @@ public class ManageClassesActivity extends AppCompatActivity {
             classList.addAll(filteredClasses);
             adapter.notifyDataSetChanged();
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Hủy đăng ký NetworkChangeReceiver khi Activity bị hủy
+        unregisterReceiver(networkChangeReceiver);
     }
 
     // Đồng bộ hóa dữ liệu Firebase với SQLite
@@ -240,28 +255,30 @@ public class ManageClassesActivity extends AppCompatActivity {
     }
 
 
-
-
-
     private boolean isDayMatchingCourse(String courseId, int day, int month, int year) {
         Calendar selectedDate = Calendar.getInstance();
         selectedDate.set(year, month - 1, day);
 
-        int actualDayOfWeek = selectedDate.get(Calendar.DAY_OF_WEEK);
+        int actualDayOfWeek = selectedDate.get(Calendar.DAY_OF_WEEK); // Lấy ngày trong tuần từ ngày đã chọn
         YogaCourseDB courseDBHelper = new YogaCourseDB(this);
         YogaCourse course = courseDBHelper.getYogaCourseById(courseId);
         if (course != null) {
-            String courseDayOfWeek = course.getDayOfWeek();
+            String courseDayOfWeek = course.getDayOfWeek(); // Ngày trong tuần mà khóa học được lên lịch
             String[] daysOfWeek = getResources().getStringArray(R.array.days_of_week);
-            int courseDayIndex = getIndexOfDayOfWeek(courseDayOfWeek, daysOfWeek);
-            return (actualDayOfWeek - 1) == courseDayIndex;
+
+            int courseDayIndex = getIndexOfDayOfWeek(courseDayOfWeek, daysOfWeek); // Lấy index của ngày khóa học
+
+            // So sánh actualDayOfWeek với courseDayIndex
+            return actualDayOfWeek == courseDayIndex; // Không cần actualDayOfWeek - 1
         }
         return false;
     }
 
+
     private int getIndexOfDayOfWeek(String dayOfWeek, String[] daysOfWeek) {
         for (int i = 0; i < daysOfWeek.length; i++) {
             if (daysOfWeek[i].equalsIgnoreCase(dayOfWeek)) {
+                // Return i + 1 because Calendar.SUNDAY = 1, Calendar.MONDAY = 2, and so on.
                 return i + 1;
             }
         }
