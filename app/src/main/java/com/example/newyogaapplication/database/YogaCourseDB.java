@@ -34,6 +34,7 @@ public class YogaCourseDB {
         values.put(YogaDBHelper.COLUMN_CLASS_TYPE, yogaCourse.getClassType());
         values.put(YogaDBHelper.COLUMN_DESCRIPTION, yogaCourse.getDescription());
         values.put(COLUMN_NAME_COURSE, yogaCourse.getNameCourse());
+        values.put(YogaDBHelper.COLUMN_IS_SYNCED, yogaCourse.isSynced() ? 1 : 0);  // Sync status
 
         long courseId = db.insert(TABLE_YOGA_COURSES, null, values);
         db.close();
@@ -53,6 +54,7 @@ public class YogaCourseDB {
         values.put(YogaDBHelper.COLUMN_CLASS_TYPE, yogaCourse.getClassType());
         values.put(YogaDBHelper.COLUMN_DESCRIPTION, yogaCourse.getDescription());
         values.put(COLUMN_NAME_COURSE, yogaCourse.getNameCourse());
+        values.put(YogaDBHelper.COLUMN_IS_SYNCED, yogaCourse.isSynced() ? 1 : 0);  // Sync status
 
         return db.update(TABLE_YOGA_COURSES, values, YogaDBHelper.COLUMN_ID + " = ?", new String[]{yogaCourse.getId()});
     }
@@ -80,7 +82,8 @@ public class YogaCourseDB {
                     cursor.getDouble(6),
                     cursor.getString(7),
                     cursor.getString(8),
-                    cursor.getString(9)
+                    cursor.getString(9),
+                    cursor.getInt(10) == 1  // isSynced
             );
             cursor.close();
             return yogaCourse;
@@ -110,7 +113,8 @@ public class YogaCourseDB {
                         cursor.getDouble(6),
                         cursor.getString(7),
                         cursor.getString(8),
-                        cursor.getString(9)
+                        cursor.getString(9),
+                        cursor.getInt(10) == 1  // isSynced
                 );
                 yogaCourseList.add(yogaCourse);
             } while (cursor.moveToNext());
@@ -166,7 +170,8 @@ public class YogaCourseDB {
                     cursor.getDouble(6),
                     cursor.getString(7),
                     cursor.getString(8),
-                    cursor.getString(9)
+                    cursor.getString(9),
+                    cursor.getInt(10) == 1  // isSynced
             );
         }
         if (cursor != null) {
@@ -175,5 +180,37 @@ public class YogaCourseDB {
         return course;
     }
 
+    // Get all unsynced Yoga Courses (isSynced = false)
+    public List<YogaCourse> getUnsyncedYogaCourses() {
+        List<YogaCourse> unsyncedCourses = new ArrayList<>();
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        // Truy vấn để lấy các khóa học chưa được đồng bộ
+        Cursor cursor = db.query(YogaDBHelper.TABLE_YOGA_COURSES, null, YogaDBHelper.COLUMN_IS_SYNCED + " = ?", new String[]{"0"}, null, null, null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                YogaCourse course = new YogaCourse(
+                        cursor.getString(0),  // id
+                        cursor.getString(1),  // firebaseKey
+                        cursor.getString(2),  // dayOfWeek
+                        cursor.getString(3),  // time
+                        cursor.getInt(4),     // capacity
+                        cursor.getString(5),  // duration
+                        cursor.getDouble(6),  // pricePerClass
+                        cursor.getString(7),  // classType
+                        cursor.getString(8),  // description
+                        cursor.getString(9),  // nameCourse
+                        cursor.getInt(10) == 1  // isSynced
+                );
+                unsyncedCourses.add(course);
+            } while (cursor.moveToNext());
+        }
+
+        if (cursor != null) {
+            cursor.close();
+        }
+        return unsyncedCourses;
+    }
 
 }

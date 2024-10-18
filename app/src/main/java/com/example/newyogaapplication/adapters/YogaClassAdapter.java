@@ -32,11 +32,12 @@ import java.util.Calendar;
 import java.util.List;
 
 public class YogaClassAdapter extends RecyclerView.Adapter<YogaClassAdapter.ClassViewHolder> {
-    private Context context;
-    private List<YogaClass> classList;
-    private DatabaseReference classRef;
-    private YogaClassDB dbHelper;
-    private YogaCourseDB courseDbHelper;
+
+    private final Context context;
+    private final List<YogaClass> classList;
+    private final DatabaseReference classRef;
+    private final YogaClassDB dbHelper;
+    private final YogaCourseDB courseDbHelper;
 
     public YogaClassAdapter(Context context, List<YogaClass> classList, DatabaseReference classRef, YogaClassDB dbHelper) {
         this.context = context;
@@ -56,23 +57,23 @@ public class YogaClassAdapter extends RecyclerView.Adapter<YogaClassAdapter.Clas
     @Override
     public void onBindViewHolder(@NonNull ClassViewHolder holder, int position) {
         YogaClass yogaClass = classList.get(position);
-        holder.tvClassDetails.setText(yogaClass.getDate() + " by " + yogaClass.getTeacher());
 
-        // Check if the context is CourseDetailActivity
+        holder.tvClassDetails.setText(
+                yogaClass.getDate() + " - " +
+                        yogaClass.getTeacher() + " - " +
+                        (yogaClass.isSynced() ? "Loaded" : "Loading")
+        );
+
+
         if (context instanceof CourseDetailActivity || context instanceof TeacherActivity) {
-            // Hide edit and delete icons in CourseDetailActivity
             holder.imgEdit.setVisibility(View.GONE);
             holder.imgDelete.setVisibility(View.GONE);
         } else {
-            // Show edit and delete icons in other activities
             holder.imgEdit.setVisibility(View.VISIBLE);
             holder.imgDelete.setVisibility(View.VISIBLE);
 
-            // Set onClick listener for edit actions
-            holder.imgEdit.setOnClickListener(v -> showEditDialog(yogaClass, position));
-
-            // Set onClick listener for delete actions
-            holder.imgDelete.setOnClickListener(v -> showDeleteConfirmation(yogaClass, position));
+            holder.imgEdit.setOnClickListener(v -> showEditDialog(yogaClass));
+            holder.imgDelete.setOnClickListener(v -> showDeleteConfirmation(yogaClass));
         }
     }
 
@@ -81,27 +82,34 @@ public class YogaClassAdapter extends RecyclerView.Adapter<YogaClassAdapter.Clas
         return classList.size();
     }
 
-    public void showEditDialog(YogaClass yogaClass, int position) {
+    // Method to show Edit Dialog
+    private void showEditDialog(YogaClass yogaClass) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle("Edit Class");
 
-        LayoutInflater inflater = LayoutInflater.from(context);
-        View dialogView = inflater.inflate(R.layout.dialog_edit_class, null);
+        View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_edit_class, null);
         builder.setView(dialogView);
 
         DatePicker datePicker = dialogView.findViewById(R.id.datePicker);
         Spinner spinnerCourseName = dialogView.findViewById(R.id.spinnerCourseName);
-        Spinner spinnerTeachers = dialogView.findViewById(R.id.spinnerTeachers); // Add spinner for teachers
+        Spinner spinnerTeachers = dialogView.findViewById(R.id.spinnerTeachers);
 
-        // Populate spinner with course names from SQLite
+        setupSpinnerCourses(spinnerCourseName, yogaClass);
+        setupSpinnerTeachers(spinnerTeachers, yogaClass);
+        setupDatePicker(datePicker, yogaClass.getDate());
+
+        builder.setPositiveButton("Update", (dialog, which) -> updateClass(yogaClass, spinnerCourseName, spinnerTeachers, datePicker));
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+        builder.create().show();
+    }
+
+    // Helper methods to set up UI components
+    private void setupSpinnerCourses(Spinner spinnerCourseName, YogaClass yogaClass) {
         List<String> courseNames = courseDbHelper.getAllCourseNames();
         ArrayAdapter<String> courseNameAdapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_item, courseNames);
         courseNameAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerCourseName.setAdapter(courseNameAdapter);
-
-        // Set existing data in the dialog
-        String[] dateParts = yogaClass.getDate().split("-");
-        datePicker.updateDate(Integer.parseInt(dateParts[0]), Integer.parseInt(dateParts[1]) - 1, Integer.parseInt(dateParts[2]));
 
         YogaCourse yogaCourse = courseDbHelper.getYogaCourseById(yogaClass.getCourseId());
         if (yogaCourse != null) {
@@ -110,102 +118,148 @@ public class YogaClassAdapter extends RecyclerView.Adapter<YogaClassAdapter.Clas
                 spinnerCourseName.setSelection(courseNamePosition);
             }
         }
+    }
 
-        // Populate spinner with teachers (use email instead of username)
+    private void setupSpinnerTeachers(Spinner spinnerTeachers, YogaClass yogaClass) {
         YogaUserDB userDB = new YogaUserDB(context);
-        List<YogaUser> teacherList = userDB.getUsersByRole(Role.TEACHER);
         List<String> teacherEmails = new ArrayList<>();
-
-        for (YogaUser teacher : teacherList) {
-            teacherEmails.add(teacher.getEmail()); // Use email instead of username
+        for (YogaUser teacher : userDB.getUsersByRole(Role.TEACHER)) {
+            teacherEmails.add(teacher.getEmail());
         }
 
         ArrayAdapter<String> teacherAdapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_item, teacherEmails);
         teacherAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerTeachers.setAdapter(teacherAdapter);
 
-        // Set the selected teacher (use email)
         int teacherPosition = teacherEmails.indexOf(yogaClass.getTeacher());
         if (teacherPosition != -1) {
             spinnerTeachers.setSelection(teacherPosition);
         }
+    }
 
-        // Update button click listener
-        builder.setPositiveButton("Update", (dialog, which) -> {
-            String selectedTeacherEmail = spinnerTeachers.getSelectedItem().toString(); // Use email
-            int day = datePicker.getDayOfMonth();
-            int month = datePicker.getMonth() + 1;
-            int year = datePicker.getYear();
-            String selectedDate = year + "-" + (month < 10 ? "0" + month : month) + "-" + (day < 10 ? "0" + day : day);
-            String selectedCourseName = spinnerCourseName.getSelectedItem().toString();
+    private void setupDatePicker(DatePicker datePicker, String date) {
+        String[] dateParts = date.split("-");
+        datePicker.updateDate(Integer.parseInt(dateParts[0]), Integer.parseInt(dateParts[1]) - 1, Integer.parseInt(dateParts[2]));
+    }
 
-            if (selectedTeacherEmail.isEmpty()) {
-                Toast.makeText(context, "Please select a teacher", Toast.LENGTH_SHORT).show();
-                return;
-            }
+    // Method to handle updating a class
+    private void updateClass(YogaClass yogaClass, Spinner spinnerCourseName, Spinner spinnerTeachers, DatePicker datePicker) {
+        String selectedTeacherEmail = spinnerTeachers.getSelectedItem().toString();
+        String selectedCourseName = spinnerCourseName.getSelectedItem().toString();
+        String selectedDate = formatDate(datePicker);
 
-            if (selectedCourseName.isEmpty()) {
-                Toast.makeText(context, "Please select a course", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            if (isPastDate(year, month, day)) {
-                Toast.makeText(context, "Selected date cannot be in the past", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
+        if (isInputValid(selectedTeacherEmail, selectedCourseName, datePicker)) {
             YogaCourse selectedCourse = courseDbHelper.getYogaCourseByName(selectedCourseName);
-            if (selectedCourse != null) {
-                if (!isDayMatchingCourse(selectedCourse.getId(), day, month, year, context)) {
-                    Toast.makeText(context, "Selected day must match the course's scheduled day", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                yogaClass.setCourseId(selectedCourse.getId());
-            } else {
-                Toast.makeText(context, "Selected course not found", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            yogaClass.setTeacher(selectedTeacherEmail); // Set teacher email instead of username
+            yogaClass.setCourseId(selectedCourse.getId());
+            yogaClass.setTeacher(selectedTeacherEmail);
             yogaClass.setDate(selectedDate);
 
-            int rowsAffected = dbHelper.updateYogaClass(yogaClass);
-            if (rowsAffected > 0) {
-                notifyItemChanged(position);
-                Toast.makeText(context, "Class updated successfully", Toast.LENGTH_SHORT).show();
+            updateYogaClassInDB(yogaClass);
+            updateYogaClassInFirebase(yogaClass);
+        }
+    }
 
-                // Update in Firebase
-                if (yogaClass.getFirebaseKey() != null) {
-                    classRef.child(yogaClass.getFirebaseKey()).setValue(yogaClass).addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            Toast.makeText(context, "Class updated successfully in Firebase", Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(context, "Failed to update class in Firebase", Toast.LENGTH_SHORT).show();
-                        }
-                    });
+    private boolean isInputValid(String selectedTeacherEmail, String selectedCourseName, DatePicker datePicker) {
+        if (selectedTeacherEmail.isEmpty()) {
+            showToast("Please select a teacher");
+            return false;
+        }
+
+        if (selectedCourseName.isEmpty()) {
+            showToast("Please select a course");
+            return false;
+        }
+
+        if (isPastDate(datePicker.getYear(), datePicker.getMonth() + 1, datePicker.getDayOfMonth())) {
+            showToast("Selected date cannot be in the past");
+            return false;
+        }
+
+        YogaCourse selectedCourse = courseDbHelper.getYogaCourseByName(selectedCourseName);
+        if (selectedCourse != null && !isDayMatchingCourse(selectedCourse.getId(), datePicker.getDayOfMonth(), datePicker.getMonth() + 1, datePicker.getYear())) {
+            showToast("Selected day must match the course's scheduled day");
+            return false;
+        }
+
+        return true;
+    }
+
+    // Methods to update class in SQLite and Firebase
+    private void updateYogaClassInDB(YogaClass yogaClass) {
+        int rowsAffected = dbHelper.updateYogaClass(yogaClass);
+        if (rowsAffected > 0) {
+            notifyItemChangedById(yogaClass.getId());
+            showToast("Class updated successfully");
+        } else {
+            showToast("Failed to update class in SQLite");
+        }
+    }
+
+    private void updateYogaClassInFirebase(YogaClass yogaClass) {
+        if (yogaClass.getFirebaseKey() != null) {
+            classRef.child(yogaClass.getFirebaseKey()).setValue(yogaClass).addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    showToast("Class updated successfully in Firebase");
+                } else {
+                    showToast("Failed to update class in Firebase");
                 }
-            } else {
-                Toast.makeText(context, "Failed to update class in SQLite", Toast.LENGTH_SHORT).show();
-            }
-        });
+            });
+        }
+    }
 
-        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
-        AlertDialog dialog = builder.create();
-        dialog.show();
+    // Helper methods
+    private void showDeleteConfirmation(YogaClass yogaClass) {
+        new AlertDialog.Builder(context)
+                .setTitle("Delete Class")
+                .setMessage("Are you sure you want to delete this class?")
+                .setPositiveButton("Delete", (dialog, which) -> deleteClass(yogaClass))
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .create().show();
+    }
+
+    private void deleteClass(YogaClass yogaClass) {
+        dbHelper.deleteYogaClass(yogaClass.getId());
+        removeClassById(yogaClass.getId());
+        showToast("Class deleted from SQLite");
+
+        if (yogaClass.getFirebaseKey() != null) {
+            classRef.child(yogaClass.getFirebaseKey()).removeValue().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    showToast("Class deleted successfully from Firebase");
+                } else {
+                    showToast("Failed to delete class from Firebase");
+                }
+            });
+        }
     }
 
 
+    private void removeClassById(String classId) {
+        for (int i = 0; i < classList.size(); i++) {
+            if (classList.get(i).getId().equals(classId)) {
+                classList.remove(i);
+                notifyItemRemoved(i);
+                break;
+            }
+        }
+    }
 
-    // Helper method to check if the date is in the past
+    private void notifyItemChangedById(String classId) {
+        for (int i = 0; i < classList.size(); i++) {
+            if (classList.get(i).getId().equals(classId)) {
+                notifyItemChanged(i);
+                break;
+            }
+        }
+    }
+
     private boolean isPastDate(int year, int month, int day) {
         Calendar selectedDate = Calendar.getInstance();
         selectedDate.set(year, month - 1, day);
-        Calendar today = Calendar.getInstance();
-        return selectedDate.before(today);
+        return selectedDate.before(Calendar.getInstance());
     }
 
-    // Method to check if the selected day matches the course's day
-    private boolean isDayMatchingCourse(String courseId, int day, int month, int year, Context context) {
+    private boolean isDayMatchingCourse(String courseId, int day, int month, int year) {
         Calendar selectedDate = Calendar.getInstance();
         selectedDate.set(year, month - 1, day);
 
@@ -216,12 +270,11 @@ public class YogaClassAdapter extends RecyclerView.Adapter<YogaClassAdapter.Clas
             String courseDayOfWeek = course.getDayOfWeek();
             String[] daysOfWeek = context.getResources().getStringArray(R.array.days_of_week);
             int courseDayIndex = getIndexOfDayOfWeek(courseDayOfWeek, daysOfWeek);
-            return (actualDayOfWeek - 1) == courseDayIndex;
+            return actualDayOfWeek == courseDayIndex;
         }
         return false;
     }
 
-    // Helper method to get the index of the day of the week
     private int getIndexOfDayOfWeek(String dayOfWeek, String[] daysOfWeek) {
         for (int i = 0; i < daysOfWeek.length; i++) {
             if (daysOfWeek[i].equalsIgnoreCase(dayOfWeek)) {
@@ -231,38 +284,17 @@ public class YogaClassAdapter extends RecyclerView.Adapter<YogaClassAdapter.Clas
         return -1;
     }
 
-    // Method to show Delete Confirmation
-    private void showDeleteConfirmation(YogaClass yogaClass, int position) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle("Delete Class");
-        builder.setMessage("Are you sure you want to delete this class?");
-
-        builder.setPositiveButton("Delete", (dialog, which) -> {
-            if (yogaClass.getFirebaseKey() != null) {
-                classRef.child(yogaClass.getFirebaseKey()).removeValue().addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        dbHelper.deleteYogaClass(yogaClass.getId());
-                        classList.remove(position);
-                        notifyItemRemoved(position);
-                        Toast.makeText(context, "Class deleted successfully from Firebase and SQLite", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(context, "Failed to delete class from Firebase", Toast.LENGTH_SHORT).show();
-                    }
-                });
-            } else {
-                dbHelper.deleteYogaClass(yogaClass.getId());
-                classList.remove(position);
-                notifyItemRemoved(position);
-                Toast.makeText(context, "Class deleted from SQLite", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
-        AlertDialog dialog = builder.create();
-        dialog.show();
+    private String formatDate(DatePicker datePicker) {
+        int day = datePicker.getDayOfMonth();
+        int month = datePicker.getMonth() + 1;
+        int year = datePicker.getYear();
+        return String.format("%04d-%02d-%02d", year, month, day);
     }
 
-    // Inner class to represent the class view
+    private void showToast(String message) {
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+    }
+
     public static class ClassViewHolder extends RecyclerView.ViewHolder {
         TextView tvClassDetails;
         ImageView imgEdit;

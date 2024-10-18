@@ -2,8 +2,8 @@ package com.example.newyogaapplication.activities;
 
 import android.app.Dialog;
 import android.app.TimePickerDialog;
-import android.content.IntentFilter;
 import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -19,10 +19,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.newyogaapplication.R;
-import com.example.newyogaapplication.classes.YogaCourse;
 import com.example.newyogaapplication.adapters.YogaCourseAdapter;
+import com.example.newyogaapplication.classes.YogaCourse;
 import com.example.newyogaapplication.database.YogaCourseDB;
-import com.example.newyogaapplication.utils.NetworkChangeReceiver;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -35,65 +34,63 @@ import java.util.Locale;
 
 public class ManageCoursesActivity extends AppCompatActivity {
 
-    RecyclerView recyclerView;
-    YogaCourseAdapter adapter;
-    YogaCourseDB courseDbHelper;
-    List<YogaCourse> courseList;
-    FirebaseDatabase firebaseDatabase;
-    DatabaseReference classRef;
-    NetworkChangeReceiver networkChangeReceiver;
+    private RecyclerView recyclerView;
+    private YogaCourseAdapter adapter;
+    private YogaCourseDB courseDbHelper;
+    private List<YogaCourse> courseList;
+    private FirebaseDatabase firebaseDatabase;
+    private DatabaseReference courseRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_manage_courses);
 
+        initUIComponents();
+        initFirebase();
+        syncFirebaseWithSQLite();
+        setupRecyclerView();
+        setupAddCourseButton();
+    }
+
+    private void initFirebase() {
+        firebaseDatabase = FirebaseDatabase.getInstance("https://thenewyoga-604c0-default-rtdb.asia-southeast1.firebasedatabase.app/");
+        courseRef = firebaseDatabase.getReference("yoga_courses");
+    }
+
+    private void initUIComponents() {
         recyclerView = findViewById(R.id.recyclerView);
         courseDbHelper = new YogaCourseDB(this);
+    }
 
-        networkChangeReceiver = new NetworkChangeReceiver();
-        IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-        registerReceiver(networkChangeReceiver, filter);
-
-        // Firebase initialization
-        firebaseDatabase = FirebaseDatabase.getInstance("https://thenewyoga-604c0-default-rtdb.asia-southeast1.firebasedatabase.app/");
-        classRef = firebaseDatabase.getReference("yoga_courses");
-
-        // Sync local database with Firebase on app launch
-        syncFirebaseWithSQLite();
-
-        // Fetch all courses from SQLite
+    private void setupRecyclerView() {
         courseList = courseDbHelper.getAllYogaCourses();
-        adapter = new YogaCourseAdapter(this, courseList, classRef, courseDbHelper);
+        adapter = new YogaCourseAdapter(this, courseList, courseRef, courseDbHelper);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
+    }
 
-        // Button to add course
+    private void setupAddCourseButton() {
         Button btnAddCourse = findViewById(R.id.btnAddCourse);
         btnAddCourse.setOnClickListener(v -> showAddCourseDialog());
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        unregisterReceiver(networkChangeReceiver);
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        if (connectivityManager != null) {
+            NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+            return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+        }
+        return false;
     }
 
-    // Synchronize Firebase data with local SQLite
     private void syncFirebaseWithSQLite() {
-        classRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        courseRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    YogaCourse course = snapshot.getValue(YogaCourse.class);
-                    if (course != null) {
-                        YogaCourse existingCourse = courseDbHelper.getYogaCourseById(course.getId());
-                        if (existingCourse != null) {
-                            courseDbHelper.updateYogaCourse(course);  // Update existing course in SQLite
-                        } else {
-                            courseDbHelper.addYogaCourse(course);     // Insert new course into SQLite
-                        }
-                    }
+                handleFirebaseSync(dataSnapshot);
+                if (isNetworkAvailable()) {
+                    syncUnsyncedCoursesToFirebase();
                 }
             }
 
@@ -104,11 +101,59 @@ public class ManageCoursesActivity extends AppCompatActivity {
         });
     }
 
-    public void showAddCourseDialog() {
+    private void handleFirebaseSync(DataSnapshot dataSnapshot) {
+        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+            YogaCourse course = snapshot.getValue(YogaCourse.class);
+            if (course != null) {
+                YogaCourse existingCourse = courseDbHelper.getYogaCourseById(course.getId());
+                if (existingCourse == null) {
+                    courseDbHelper.addYogaCourse(course);
+                } else {
+                    courseDbHelper.updateYogaCourse(course);
+                }
+            }
+        }
+
+        List<YogaCourse> allCoursesInSQLite = courseDbHelper.getAllYogaCourses();
+        for (YogaCourse localCourse : allCoursesInSQLite) {
+            if (!dataSnapshot.hasChild(localCourse.getFirebaseKey())) {
+                courseDbHelper.deleteYogaCourse(localCourse.getId());
+            }
+        }
+
+        updateCourseList(courseDbHelper.getAllYogaCourses());
+    }
+
+    private void syncUnsyncedCoursesToFirebase() {
+        List<YogaCourse> unsyncedCourses = courseDbHelper.getUnsyncedYogaCourses();
+        for (YogaCourse course : unsyncedCourses) {
+            syncCourseToFirebase(course);
+        }
+        updateCourseList(courseDbHelper.getAllYogaCourses());
+    }
+
+    private void syncCourseToFirebase(YogaCourse course) {
+        if (course.getFirebaseKey() == null) {
+            String firebaseKey = courseRef.push().getKey();
+            course.setFirebaseKey(firebaseKey);
+        }
+        courseRef.child(course.getFirebaseKey()).setValue(course).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                course.setSynced(true);  // Đặt isSynced thành true
+                courseDbHelper.updateYogaCourse(course);  // Cập nhật trạng thái trong SQLite
+                updateCourseList(courseDbHelper.getAllYogaCourses());  // Cập nhật danh sách khóa học
+                Toast.makeText(ManageCoursesActivity.this, "Course synced with Firebase!", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(ManageCoursesActivity.this, "Failed to sync course with Firebase", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+
+    private void showAddCourseDialog() {
         Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_yoga_course);
 
-        // Initialize views
         Spinner spinnerDayOfWeek = dialog.findViewById(R.id.spinnerDayOfWeek);
         Spinner spinnerClassType = dialog.findViewById(R.id.spinnerClassType);
         EditText etTimeOfCourse = dialog.findViewById(R.id.etTimeOfCourse);
@@ -119,7 +164,27 @@ public class ManageCoursesActivity extends AppCompatActivity {
         EditText etNameCourse = dialog.findViewById(R.id.etNameCourse);
         Button btnSave = dialog.findViewById(R.id.btnSave);
 
-        // Populate spinners with arrays
+        setupSpinners(spinnerDayOfWeek, spinnerClassType);
+        setupTimePicker(etTimeOfCourse);
+        setupDurationPicker(etDuration);
+
+        btnSave.setOnClickListener(v -> {
+            if (validateInputs(spinnerDayOfWeek, spinnerClassType, etTimeOfCourse, etCapacity, etDuration, etPricePerClass, etDescription, etNameCourse)) {
+                addNewCourse(spinnerDayOfWeek, spinnerClassType, etTimeOfCourse, etCapacity, etDuration, etPricePerClass, etDescription, etNameCourse);
+                dialog.dismiss();
+            }
+        });
+
+        dialog.show();
+    }
+
+    private void updateCourseList(List<YogaCourse> updatedCourses) {
+        courseList.clear();
+        courseList.addAll(updatedCourses);
+        adapter.notifyDataSetChanged();
+    }
+
+    private void setupSpinners(Spinner spinnerDayOfWeek, Spinner spinnerClassType) {
         ArrayAdapter<CharSequence> dayAdapter = ArrayAdapter.createFromResource(this,
                 R.array.days_of_week, android.R.layout.simple_spinner_item);
         dayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -129,139 +194,102 @@ public class ManageCoursesActivity extends AppCompatActivity {
                 R.array.yoga_class_types, android.R.layout.simple_spinner_item);
         typeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerClassType.setAdapter(typeAdapter);
+    }
 
-        // Add click listener for Time of Course
+    private void setupTimePicker(EditText etTimeOfCourse) {
         etTimeOfCourse.setOnClickListener(v -> {
-            // Open TimePickerDialog to choose the time of course
             Calendar currentTime = Calendar.getInstance();
             int hour = currentTime.get(Calendar.HOUR_OF_DAY);
             int minute = currentTime.get(Calendar.MINUTE);
-
             TimePickerDialog timePicker = new TimePickerDialog(ManageCoursesActivity.this, (view, hourOfDay, minuteOfHour) -> {
                 String selectedTime = String.format(Locale.getDefault(), "%02d:%02d", hourOfDay, minuteOfHour);
                 etTimeOfCourse.setText(selectedTime);
-            }, hour, minute, true);  // Use 24-hour format
+            }, hour, minute, true);
             timePicker.show();
         });
+    }
 
-        // Add click listener for Duration
+    private void setupDurationPicker(EditText etDuration) {
         etDuration.setOnClickListener(v -> {
-            // Open NumberPickerDialog to choose the duration
             NumberPicker numberPicker = new NumberPicker(ManageCoursesActivity.this);
-            numberPicker.setMinValue(1);  // Minimum value (1 minute)
-            numberPicker.setMaxValue(300); // Maximum value (300 minutes)
+            numberPicker.setMinValue(1);
+            numberPicker.setMaxValue(300);
 
             AlertDialog.Builder builder = new AlertDialog.Builder(ManageCoursesActivity.this);
             builder.setTitle("Select Duration (in minutes)");
             builder.setView(numberPicker);
-            builder.setPositiveButton("OK", (dialogInterface, which) -> {
-                etDuration.setText(String.valueOf(numberPicker.getValue()));
-            });
+            builder.setPositiveButton("OK", (dialogInterface, which) -> etDuration.setText(String.valueOf(numberPicker.getValue())));
             builder.setNegativeButton("Cancel", (dialogInterface, which) -> dialogInterface.dismiss());
             builder.create().show();
         });
-
-        // Save button click listener
-        btnSave.setOnClickListener(v -> {
-            String day = spinnerDayOfWeek.getSelectedItem().toString();
-            String time = etTimeOfCourse.getText().toString().trim();
-            String capacityStr = etCapacity.getText().toString().trim();
-            String durationStr = etDuration.getText().toString().trim();
-            String priceStr = etPricePerClass.getText().toString().trim();
-            String type = spinnerClassType.getSelectedItem().toString();
-            String description = etDescription.getText().toString().trim();
-            String nameCourse = etNameCourse.getText().toString().trim();
-
-            // Validate inputs
-            if (validateCourseInputs(day, time, capacityStr, durationStr, priceStr, nameCourse)) {
-                int capacity;
-                double price;
-                try {
-                    capacity = Integer.parseInt(capacityStr);
-                    price = Double.parseDouble(priceStr);
-                } catch (NumberFormatException e) {
-                    Toast.makeText(ManageCoursesActivity.this, "Please enter valid numbers for capacity and price", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                // Generate Firebase key
-                String firebaseKey = classRef.push().getKey();
-                if (firebaseKey == null) {
-                    Toast.makeText(ManageCoursesActivity.this, "Error generating Firebase key", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                // Create new course object
-                YogaCourse newCourse = new YogaCourse(firebaseKey, firebaseKey, day, time, capacity, durationStr, price, type, description, nameCourse);
-
-                // Add course to SQLite and Firebase
-                long newCourseId = addNewCourse(newCourse);
-                if (newCourseId != -1) {
-                    // Update the UI if added successfully to SQLite
-                    newCourse.setId(String.valueOf(newCourseId));
-
-                    // Add course to Firebase
-                    classRef.child(firebaseKey).setValue(newCourse).addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            Toast.makeText(ManageCoursesActivity.this, "Course added to Firebase!", Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(ManageCoursesActivity.this, "Failed to add course to Firebase", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                } else {
-                    Toast.makeText(ManageCoursesActivity.this, "Failed to add course to SQLite", Toast.LENGTH_SHORT).show();
-                }
-
-                dialog.dismiss();
-            }
-        });
-
-        dialog.show();
     }
 
-
-    private boolean validateCourseInputs(String day, String time, String capacityStr, String durationStr, String priceStr, String nameCourse) {
-        if (nameCourse.isEmpty()) {
-            Toast.makeText(ManageCoursesActivity.this, "Please enter course name", Toast.LENGTH_SHORT).show();
+    private boolean validateInputs(Spinner spinnerDayOfWeek, Spinner spinnerClassType, EditText etTimeOfCourse,
+                                   EditText etCapacity, EditText etDuration, EditText etPricePerClass, EditText etDescription, EditText etNameCourse) {
+        if (etNameCourse.getText().toString().isEmpty()) {
+            Toast.makeText(this, "Please enter course name", Toast.LENGTH_SHORT).show();
             return false;
         }
 
-        if (day.isEmpty() || time.isEmpty() || capacityStr.isEmpty() || durationStr.isEmpty() || priceStr.isEmpty()) {
-            Toast.makeText(ManageCoursesActivity.this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
+        if (spinnerDayOfWeek.getSelectedItem() == null || spinnerClassType.getSelectedItem() == null ||
+                etTimeOfCourse.getText().toString().isEmpty() || etCapacity.getText().toString().isEmpty() ||
+                etDuration.getText().toString().isEmpty() || etPricePerClass.getText().toString().isEmpty()) {
+            Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
             return false;
         }
 
         return true;
     }
 
-    private long addNewCourse(YogaCourse newCourse) {
-        long newCourseId = courseDbHelper.addYogaCourse(newCourse);
+    private void addNewCourse(Spinner spinnerDayOfWeek, Spinner spinnerClassType, EditText etTimeOfCourse,
+                              EditText etCapacity, EditText etDuration, EditText etPricePerClass, EditText etDescription, EditText etNameCourse) {
+        String day = spinnerDayOfWeek.getSelectedItem().toString();
+        String time = etTimeOfCourse.getText().toString().trim();
+        String capacityStr = etCapacity.getText().toString().trim();
+        String durationStr = etDuration.getText().toString().trim();
+        String priceStr = etPricePerClass.getText().toString().trim();
+        String type = spinnerClassType.getSelectedItem().toString();
+        String description = etDescription.getText().toString().trim();
+        String nameCourse = etNameCourse.getText().toString().trim();
 
-        if (newCourseId != -1) {
-            newCourse.setFirebaseKey(newCourse.getFirebaseKey());
-            courseDbHelper.updateYogaCourse(newCourse);
+        if (validateInputs(spinnerDayOfWeek, spinnerClassType, etTimeOfCourse, etCapacity, etDuration, etPricePerClass, etDescription, etNameCourse)) {
+            int capacity;
+            double price;
 
-            classRef.child(newCourse.getFirebaseKey()).setValue(newCourse).addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    courseList.add(newCourse);
-                    adapter.notifyItemInserted(courseList.size() - 1);
-                    Toast.makeText(ManageCoursesActivity.this, "Course added successfully!", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(ManageCoursesActivity.this, "Failed to add course to Firebase", Toast.LENGTH_SHORT).show();
-                }
-            });
-        } else {
-            Toast.makeText(ManageCoursesActivity.this, "Failed to add course to SQLite", Toast.LENGTH_SHORT).show();
+            try {
+                capacity = Integer.parseInt(capacityStr);
+                price = Double.parseDouble(priceStr);
+            } catch (NumberFormatException e) {
+                Toast.makeText(this, "Invalid capacity or price value. Please enter valid numbers.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String localId = java.util.UUID.randomUUID().toString();
+            String firebaseKey = courseRef.push().getKey();  // Tạo firebaseKey từ Firebase
+            YogaCourse newCourse = new YogaCourse(localId, firebaseKey, day, time, capacity, durationStr, price, type, description, nameCourse, false); // isSynced là false
+
+            long newCourseId = courseDbHelper.addYogaCourse(newCourse);
+
+            if (newCourseId != -1) {
+                newCourse.setFirebaseKey(firebaseKey);  // Gán firebaseKey
+                syncCourseToFirebase(newCourse);  // Đồng bộ lên Firebase nếu có mạng
+                courseList.add(newCourse);  // Cập nhật danh sách hiển thị
+                adapter.notifyItemInserted(courseList.size() - 1);
+                Toast.makeText(ManageCoursesActivity.this, "Course added successfully!", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(ManageCoursesActivity.this, "Failed to add course to SQLite", Toast.LENGTH_SHORT).show();
+            }
         }
-        return newCourseId;
     }
+
 
 
     @Override
     protected void onResume() {
         super.onResume();
-        courseList.clear();
-        courseList.addAll(courseDbHelper.getAllYogaCourses());
-        adapter.notifyDataSetChanged();
+        updateCourseList(courseDbHelper.getAllYogaCourses());
+        if (isNetworkAvailable()) {
+            syncUnsyncedCoursesToFirebase();
+        }
     }
 }

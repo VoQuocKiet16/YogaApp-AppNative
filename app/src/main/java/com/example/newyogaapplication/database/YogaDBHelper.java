@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class YogaDBHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "YogaApp.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;  // Tăng phiên bản cơ sở dữ liệu
 
     // Tables for Yoga Classes and Yoga Courses
     public static final String TABLE_YOGA_COURSES = "YogaCourses";
@@ -17,6 +17,7 @@ public class YogaDBHelper extends SQLiteOpenHelper {
     // Common columns
     public static final String COLUMN_ID = "id";
     public static final String COLUMN_FIREBASE_KEY = "firebaseKey";
+    public static final String COLUMN_IS_SYNCED = "isSynced";  // Trường isSynced cho trạng thái đồng bộ
 
     // Course-specific columns
     public static final String COLUMN_DAY_OF_WEEK = "dayOfWeek";
@@ -27,7 +28,6 @@ public class YogaDBHelper extends SQLiteOpenHelper {
     public static final String COLUMN_CLASS_TYPE = "classType";
     public static final String COLUMN_DESCRIPTION = "description";
     public static final String COLUMN_NAME_COURSE = "nameCourse";
-
 
     // Class-specific columns
     public static final String COLUMN_COURSE_ID = "courseId";
@@ -58,7 +58,8 @@ public class YogaDBHelper extends SQLiteOpenHelper {
                 + COLUMN_PRICE_PER_CLASS + " REAL,"
                 + COLUMN_CLASS_TYPE + " TEXT,"
                 + COLUMN_DESCRIPTION + " TEXT,"
-                + COLUMN_NAME_COURSE + " TEXT"
+                + COLUMN_NAME_COURSE + " TEXT,"
+                + COLUMN_IS_SYNCED + " INTEGER DEFAULT 0"  // Thêm trường isSynced
                 + ")";
         db.execSQL(CREATE_YOGA_COURSES_TABLE);
 
@@ -68,7 +69,8 @@ public class YogaDBHelper extends SQLiteOpenHelper {
                 + COLUMN_COURSE_ID + " TEXT,"
                 + COLUMN_DATE + " TEXT,"
                 + COLUMN_TEACHER + " TEXT,"
-                + COLUMN_FIREBASE_KEY + " TEXT"
+                + COLUMN_FIREBASE_KEY + " TEXT,"
+                + COLUMN_IS_SYNCED + " INTEGER DEFAULT 0"  // Thêm trường isSynced
                 + ")";
         db.execSQL(CREATE_YOGA_CLASSES_TABLE);
 
@@ -86,9 +88,10 @@ public class YogaDBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_YOGA_COURSES);
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_YOGA_CLASSES);
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_YOGA_USERS);
-        onCreate(db);
+        if (oldVersion < 2) {
+            // Thêm trường isSynced nếu cơ sở dữ liệu trước chưa có
+            db.execSQL("ALTER TABLE " + TABLE_YOGA_COURSES + " ADD COLUMN " + COLUMN_IS_SYNCED + " INTEGER DEFAULT 0");
+            db.execSQL("ALTER TABLE " + TABLE_YOGA_CLASSES + " ADD COLUMN " + COLUMN_IS_SYNCED + " INTEGER DEFAULT 0");
+        }
     }
 }
