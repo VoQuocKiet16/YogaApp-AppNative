@@ -2,27 +2,30 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:gravity="center_horizontal"
     android:orientation="vertical"
-    android:padding="16dp"
-    android:gravity="center_horizontal">
+    android:background="@drawable/background_login"
+    android:padding="16dp">
 
     <!-- Title for better context -->
     <TextView
         android:id="@+id/tvTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:fontFamily="@font/pacifico_regular"
+        android:textColor="@color/md_theme_onPrimaryFixed"
         android:text="Manage Courses"
         android:textSize="22sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="16dp" />
+        android:textStyle="bold" />
 
     <!-- Horizontal layout for buttons -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:layout_marginBottom="16dp"
         android:gravity="center"
-        android:layout_marginBottom="16dp">
+        android:orientation="horizontal">
 
         <!-- Button to add course -->
         <Button
@@ -30,20 +33,24 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Add Course" />
+            android:fontFamily="sans-serif"
+            android:text="Create Course" />
     </LinearLayout>
 
     <!-- Section for displaying list of courses -->
+
+    <!-- RecyclerView to display courses -->
     <TextView
         android:id="@+id/tvCoursesList"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:fontFamily="@font/notoserifkr_variablefont_wght"
         android:text="Available Courses"
+        android:textColor="@color/md_theme_onPrimaryFixed"
         android:textSize="18sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="12dp" />
+        android:textStyle="bold" />
 
-    <!-- RecyclerView to display courses -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"

@@ -2,38 +2,90 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:gravity="center_horizontal"
+    android:background="@drawable/background_login">
 
+    <!-- Logo Gymnastic Center -->
+    <ImageView
+        android:id="@+id/ivLogo"
+        android:layout_width="250dp"
+        android:layout_height="200dp"
+        android:src="@drawable/yoga_logo"
+        android:layout_marginBottom="30dp" />
+
+    <TextView
+        android:id="@+id/tvsignup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/pacifico_regular"
+        android:text="Sign Up"
+        android:textColor="@color/md_theme_onPrimaryFixed"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="24dp"  />
+
+    <!-- Email input field -->
     <EditText
         android:id="@+id/etEmail"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Email" />
+        android:hint="Email"
+        android:drawableStart="@drawable/ic_email"
+        android:drawablePadding="10dp"
+        android:inputType="textEmailAddress"
+        android:background="@drawable/edit_text_background"
+        android:padding="15dp"
+        android:layout_marginBottom="20dp"/>
 
+    <!-- Username input field -->
     <EditText
         android:id="@+id/etUsername"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Username" />
+        android:hint="Username"
+        android:drawableStart="@drawable/ic_username"
+        android:drawablePadding="10dp"
+        android:background="@drawable/edit_text_background"
+        android:padding="15dp"
+        android:layout_marginBottom="20dp"/>
 
+    <!-- Password input field -->
     <EditText
         android:id="@+id/etPassword"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Password"
-        android:inputType="textPassword" />
+        android:drawableStart="@drawable/ic_password"
+        android:drawablePadding="10dp"
+        android:inputType="textPassword"
+        android:background="@drawable/edit_text_background"
+        android:padding="15dp"
+        android:layout_marginBottom="20dp"/>
 
+    <!-- Confirm Password input field -->
     <EditText
         android:id="@+id/etConfirmPassword"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Confirm Password"
-        android:inputType="textPassword" />
+        android:drawableStart="@drawable/ic_password"
+        android:drawablePadding="10dp"
+        android:inputType="textPassword"
+        android:background="@drawable/edit_text_background"
+        android:padding="15dp"
+        android:layout_marginBottom="20dp"/>
 
+    <!-- Register Button -->
     <Button
         android:id="@+id/btnRegister"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Register" />
+        android:text="Register"
+        android:textColor="#FFFFFF"
+        android:background="@drawable/button_background"
+        android:padding="15dp"
+        android:layout_marginBottom="10dp"/>
 
 </LinearLayout>

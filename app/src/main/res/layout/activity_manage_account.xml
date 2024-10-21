@@ -4,7 +4,32 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="@drawable/background_login"
+    android:gravity="center_horizontal"
     android:padding="16dp">
+
+    <!-- Title for better context -->
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/pacifico_regular"
+        android:textColor="@color/md_theme_onPrimaryFixed"
+        android:text="Manage Accounts"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp" />
+
+    <TextView
+        android:id="@+id/tvAccountList"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:fontFamily="@font/notoserifkr_variablefont_wght"
+        android:text="Available Accounts"
+        android:textColor="@color/md_theme_onPrimaryFixed"
+        android:textSize="18sp"
+        android:textStyle="bold" />
 
     <!-- RecyclerView for displaying user accounts -->
     <androidx.recyclerview.widget.RecyclerView

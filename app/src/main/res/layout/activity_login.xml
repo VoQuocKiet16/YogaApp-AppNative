@@ -2,32 +2,76 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:gravity="center_horizontal"
+    android:background="@drawable/background_login">
 
+    <!-- Logo Gymnastic Center -->
+    <ImageView
+        android:id="@+id/ivLogo"
+        android:layout_width="250dp"
+        android:layout_height="200dp"
+        android:src="@drawable/yoga_logo"
+        android:layout_marginBottom="16dp"
+        android:scaleType="fitCenter"/>
+
+    <!-- Title Text - centered with top and bottom margins -->
+    <TextView
+        android:id="@+id/tvlogin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/pacifico_regular"
+        android:text="Sign In"
+        android:textColor="@color/md_theme_onPrimaryFixed"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="24dp"  />
+
+    <!-- Email input field -->
     <EditText
         android:id="@+id/etEmail"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Email" />
+        android:layout_marginBottom="20dp"
+        android:background="@drawable/edit_text_background"
+        android:drawableStart="@drawable/ic_email"
+        android:drawablePadding="10dp"
+        android:hint="Email"
+        android:inputType="textEmailAddress"
+        android:padding="15dp" />
 
+    <!-- Password input field -->
     <EditText
         android:id="@+id/etPassword"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Password"
-        android:inputType="textPassword" />
+        android:drawableStart="@drawable/ic_password"
+        android:drawablePadding="10dp"
+        android:inputType="textPassword"
+        android:background="@drawable/edit_text_background"
+        android:padding="15dp"
+        android:layout_marginBottom="20dp"/>
 
+    <!-- Login Button -->
     <Button
         android:id="@+id/btnLogin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Login" />
+        android:text="Login"
+        android:textColor="#FFFFFF"
+        android:background="@drawable/button_background"
+        android:padding="15dp"
+        android:layout_marginBottom="10dp"/>
 
-    <!-- New button for registration -->
-    <Button
-        android:id="@+id/btnRegister"
-        android:layout_width="match_parent"
+    <!-- Registration Text -->
+    <TextView
+        android:id="@+id/tvRegister"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Register" />
+        android:text="Don't have an account? Sign up"
+        android:textSize="14sp"
+        android:layout_gravity="center" />
 
 </LinearLayout>

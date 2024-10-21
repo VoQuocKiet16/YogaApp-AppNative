@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -18,7 +19,8 @@ import com.example.newyogaapplication.utils.SessionManager;
 public class MainActivity extends AppCompatActivity {
 
     private TextView tvTitle;
-    private Button btnLogout, btnManageAccounts, btnMyClass;
+    private Button btnManageAccounts, btnMyClass;
+    private ImageButton imgLogout;
     private SessionManager sessionManager;
     private YogaUserDB userDbHelper;
 
@@ -65,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
         btnMyClass = findViewById(R.id.btnMyClass);
 
         // Logout button
-        btnLogout = findViewById(R.id.btnLogout);
+        imgLogout = findViewById(R.id.btnLogout);
 
         // Set the button visibility based on the role
         if (loggedInUser != null) {
@@ -109,7 +111,7 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        btnLogout.setOnClickListener(v -> {
+        imgLogout.setOnClickListener(v -> {
             sessionManager.logoutUser();
             redirectToLogin();
         });

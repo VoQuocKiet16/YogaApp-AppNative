@@ -4,12 +4,14 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.newyogaapplication.R;
+import com.example.newyogaapplication.classes.Role;
 import com.example.newyogaapplication.classes.YogaUser;
 import com.example.newyogaapplication.sync.SyncManager;
 import com.example.newyogaapplication.utils.HashUtils;
@@ -23,9 +25,11 @@ import com.google.firebase.database.ValueEventListener;
 public class LoginActivity extends AppCompatActivity {
 
     private EditText etEmail, etPassword;
-    private Button btnLogin, btnRegister;
+    private Button btnLogin;
     private DatabaseReference userRef;  // Firebase reference
     private SessionManager sessionManager;
+    private TextView tvRegister;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,7 +39,7 @@ public class LoginActivity extends AppCompatActivity {
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
         btnLogin = findViewById(R.id.btnLogin);
-        btnRegister = findViewById(R.id.btnRegister);
+        tvRegister = findViewById(R.id.tvRegister);
 
         sessionManager = new SessionManager(this);
 
@@ -69,7 +73,7 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         // Set up the Register button to switch to RegisterActivity
-        btnRegister.setOnClickListener(v -> {
+        tvRegister.setOnClickListener(v -> {
             Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
             startActivity(intent);
         });
@@ -90,13 +94,19 @@ public class LoginActivity extends AppCompatActivity {
                         YogaUser user = snapshot.getValue(YogaUser.class);
 
                         if (user != null && user.getPassword().equals(hashedPassword)) {
-                            // Save login session with user's email
-                            sessionManager.createLoginSession(user.getEmail());
+                            // Check if the user has the CUSTOMER role
+                            if (user.getRole() == Role.CUSTOMER) {
+                                // If the role is CUSTOMER, show an access denied message
+                                Toast.makeText(LoginActivity.this, "You do not have access here", Toast.LENGTH_SHORT).show();
+                            } else {
+                                // Save login session with user's email
+                                sessionManager.createLoginSession(user.getEmail());
 
-                            // Redirect to MainActivity
-                            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                            startActivity(intent);
-                            finish(); // Close login activity
+                                // Redirect to MainActivity
+                                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                                startActivity(intent);
+                                finish(); // Close login activity
+                            }
                         } else {
                             Toast.makeText(LoginActivity.this, "Invalid email or password", Toast.LENGTH_SHORT).show();
                         }
@@ -112,4 +122,6 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
     }
+
 }
+

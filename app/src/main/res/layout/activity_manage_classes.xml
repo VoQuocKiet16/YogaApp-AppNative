@@ -4,6 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
+    android:background="@drawable/background_login"
     android:gravity="center_horizontal">
 
     <!-- Title for better context -->
@@ -11,6 +12,8 @@
         android:id="@+id/tvTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:fontFamily="@font/pacifico_regular"
+        android:textColor="@color/md_theme_onPrimaryFixed"
         android:text="Manage Classes"
         android:textSize="22sp"
         android:textStyle="bold"
@@ -49,6 +52,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginEnd="8dp"
+            android:fontFamily="sans-serif"
             android:text="Search" />
 
         <!-- Button to add class -->
@@ -57,7 +61,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Add Class" />
+            android:fontFamily="sans-serif"
+            android:text="Create Class" />
     </LinearLayout>
 
     <!-- Section for displaying list of courses -->
@@ -65,6 +70,8 @@
         android:id="@+id/tvCoursesList"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textColor="@color/md_theme_onPrimaryFixed"
+        android:fontFamily="@font/notoserifkr_variablefont_wght"
         android:text="Available Classes"
         android:textSize="18sp"
         android:textStyle="bold"
