@@ -92,6 +92,23 @@
             android:textColor="#FFFFFF"
             android:textSize="18sp" />
 
+        <!-- Manage Accounts Button -->
+        <Button
+            android:id="@+id/btnManageHistories"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_rowWeight="1"
+            android:layout_columnWeight="1"
+            android:layout_margin="8dp"
+            android:background="@drawable/button_background"
+            android:paddingLeft="16dp"
+            android:paddingTop="12dp"
+            android:paddingRight="16dp"
+            android:paddingBottom="12dp"
+            android:text="Manage Histories"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp" />
+
         <!-- My Class Button -->
         <Button
             android:id="@+id/btnMyClass"

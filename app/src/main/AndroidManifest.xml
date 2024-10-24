@@ -29,6 +29,7 @@
         <activity android:name=".activities.CourseDetailActivity" />
         <activity android:name=".activities.ManageAccountActivity"/>
         <activity android:name=".activities.TeacherActivity" />
+        <activity android:name=".activities.ManageHistoryActivity" />
 
         <!-- RegisterActivity Declaration -->
         <activity android:name=".activities.RegisterActivity" />

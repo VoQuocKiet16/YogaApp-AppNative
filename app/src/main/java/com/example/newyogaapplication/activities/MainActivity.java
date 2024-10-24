@@ -19,7 +19,7 @@ import com.example.newyogaapplication.utils.SessionManager;
 public class MainActivity extends AppCompatActivity {
 
     private TextView tvTitle;
-    private Button btnManageAccounts, btnMyClass;
+    private Button btnManageAccounts, btnMyClass, btnManageHistories;
     private ImageButton imgLogout;
     private SessionManager sessionManager;
     private YogaUserDB userDbHelper;
@@ -61,7 +61,10 @@ public class MainActivity extends AppCompatActivity {
         Button btnManageClasses = findViewById(R.id.btnManageClasses);
 
         // Manage Accounts button
-        btnManageAccounts = findViewById(R.id.btnManageAccounts);
+        Button btnManageAccounts = findViewById(R.id.btnManageAccounts);
+
+        // Manage Accounts button
+        Button btnManageHistories = findViewById(R.id.btnManageHistories);
 
         // My Class button to go to TeacherActivity
         btnMyClass = findViewById(R.id.btnMyClass);
@@ -76,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
                 btnManageCourses.setVisibility(View.VISIBLE);
                 btnManageClasses.setVisibility(View.VISIBLE);
                 btnManageAccounts.setVisibility(View.VISIBLE);
+                btnManageHistories.setVisibility(View.VISIBLE);
 
                 // Hide the teacher-specific button
                 btnMyClass.setVisibility(View.GONE);
@@ -87,6 +91,7 @@ public class MainActivity extends AppCompatActivity {
                 btnManageCourses.setVisibility(View.GONE);
                 btnManageClasses.setVisibility(View.GONE);
                 btnManageAccounts.setVisibility(View.GONE);
+                btnManageHistories.setVisibility(View.GONE);
             }
         }
 
@@ -101,10 +106,17 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
+        btnManageHistories.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, ManageHistoryActivity.class);
+            startActivity(intent);
+        });
+
         btnManageAccounts.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, ManageAccountActivity.class);
             startActivity(intent);
         });
+
+
 
         btnMyClass.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, TeacherActivity.class);

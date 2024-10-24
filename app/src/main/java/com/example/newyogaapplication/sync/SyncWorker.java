@@ -43,6 +43,7 @@ public class SyncWorker {
         syncCourses();
         syncClasses();
         syncUsers();
+
     }
 
     public void syncSQLiteWithFirebase() {
@@ -67,7 +68,6 @@ public class SyncWorker {
                         }
                     }
                 }
-//                Toast.makeText(context, "Courses synced from Firebase", Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -92,7 +92,6 @@ public class SyncWorker {
                         }
                     }
                 }
-//                Toast.makeText(context, "Classes synced from Firebase", Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -117,7 +116,6 @@ public class SyncWorker {
                         }
                     }
                 }
-//                Toast.makeText(context, "Users synced from Firebase", Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -140,7 +138,6 @@ public class SyncWorker {
                 courseRef.child(course.getFirebaseKey()).setValue(course);
             }
         }
-//        Toast.makeText(context, "Courses synced to Firebase", Toast.LENGTH_SHORT).show();
     }
 
     private void syncClassesToFirebase() {
@@ -155,7 +152,6 @@ public class SyncWorker {
                 classRef.child(yogaClass.getFirebaseKey()).setValue(yogaClass);
             }
         }
-//        Toast.makeText(context, "Classes synced to Firebase", Toast.LENGTH_SHORT).show();
     }
 
     private void syncUsersToFirebase() {
@@ -170,6 +166,7 @@ public class SyncWorker {
                 userRef.child(user.getFirebaseKey()).setValue(user);
             }
         }
-//        Toast.makeText(context, "Users synced to Firebase", Toast.LENGTH_SHORT).show();
     }
+
+    // Sync histories from SQLite to Firebase
 }
