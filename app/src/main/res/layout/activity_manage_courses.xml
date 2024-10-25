@@ -35,6 +35,14 @@
             android:layout_weight="1"
             android:fontFamily="sans-serif"
             android:text="Create Course" />
+        <Button
+            android:id="@+id/btnDeleteAllCourses"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Delete All Courses"
+            android:textColor="@android:color/white"
+            android:backgroundTint="@color/md_theme_secondary" />
     </LinearLayout>
 
     <!-- Section for displaying list of courses -->

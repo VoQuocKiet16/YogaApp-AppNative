@@ -63,14 +63,16 @@ public class YogaDBHelper extends SQLiteOpenHelper {
                 + ")";
         db.execSQL(CREATE_YOGA_COURSES_TABLE);
 
-        // Create Yoga Classes Table
+        // Create Yoga Classes Table with Foreign Key to YogaCourses
         String CREATE_YOGA_CLASSES_TABLE = "CREATE TABLE " + TABLE_YOGA_CLASSES + "("
                 + COLUMN_ID + " TEXT PRIMARY KEY,"
                 + COLUMN_COURSE_ID + " TEXT,"
                 + COLUMN_DATE + " TEXT,"
                 + COLUMN_TEACHER + " TEXT,"
                 + COLUMN_FIREBASE_KEY + " TEXT,"
-                + COLUMN_IS_SYNCED + " INTEGER DEFAULT 0"
+                + COLUMN_IS_SYNCED + " INTEGER DEFAULT 0,"
+                + "FOREIGN KEY(" + COLUMN_COURSE_ID + ") REFERENCES " + TABLE_YOGA_COURSES + "(" + COLUMN_ID + ")"
+                + " ON DELETE CASCADE"
                 + ")";
         db.execSQL(CREATE_YOGA_CLASSES_TABLE);
 
@@ -84,6 +86,12 @@ public class YogaDBHelper extends SQLiteOpenHelper {
                 + COLUMN_ROLE + " TEXT"
                 + ")";
         db.execSQL(CREATE_USERS_TABLE);
+    }
+
+    @Override
+    public void onOpen(SQLiteDatabase db) {
+        super.onOpen(db);
+        db.execSQL("PRAGMA foreign_keys=ON;");
     }
 
     @Override

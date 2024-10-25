@@ -11,6 +11,7 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -25,6 +26,7 @@ import com.example.newyogaapplication.classes.YogaUser;
 import com.example.newyogaapplication.database.YogaClassDB;
 import com.example.newyogaapplication.database.YogaCourseDB;
 import com.example.newyogaapplication.database.YogaUserDB;
+import com.example.newyogaapplication.sync.SyncManager;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -55,6 +57,12 @@ public class ManageClassesActivity extends AppCompatActivity {
         setupRecyclerView();
         setupAddClassButton();
         setupSearchFunctionality();
+        setupDeleteAllClassesButton();
+
+
+        // Start sync process using SyncManager
+        SyncManager syncManager = new SyncManager(this);
+        syncManager.startSyncing();
     }
 
     private void initViews() {
@@ -345,6 +353,39 @@ public class ManageClassesActivity extends AppCompatActivity {
         int year = datePicker.getYear();
         return year + "-" + (month < 10 ? "0" + month : month) + "-" + (day < 10 ? "0" + day : day);
     }
+
+    private void setupDeleteAllClassesButton() {
+        Button btnDeleteAllClasses = findViewById(R.id.btnDeleteAllClasses);
+        btnDeleteAllClasses.setOnClickListener(v -> showDeleteAllClassesConfirmation());
+    }
+
+    // Hiển thị hộp thoại xác nhận trước khi xóa tất cả lớp học
+    private void showDeleteAllClassesConfirmation() {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete All Classes")
+                .setMessage("Are you sure you want to delete all classes? This action cannot be undone.")
+                .setPositiveButton("Delete", (dialog, which) -> deleteAllClasses())
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .create().show();
+    }
+
+    // Hàm để xóa tất cả lớp học
+    private void deleteAllClasses() {
+        // Xóa tất cả lớp học từ Firebase
+        classRef.removeValue().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                // Xóa tất cả lớp học từ SQLite
+                dbHelper.deleteAllYogaClasses();
+                // Làm mới danh sách hiển thị
+                classList.clear();
+                adapter.notifyDataSetChanged();
+                Toast.makeText(ManageClassesActivity.this, "All classes deleted successfully", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(ManageClassesActivity.this, "Failed to delete classes from Firebase", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
 
     @Override
     protected void onResume() {

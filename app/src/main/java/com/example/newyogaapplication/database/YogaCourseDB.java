@@ -213,4 +213,9 @@ public class YogaCourseDB {
         return unsyncedCourses;
     }
 
+    public void deleteAllYogaCourses() {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        db.delete(TABLE_YOGA_COURSES, null, null);
+        db.close();
+    }
 }

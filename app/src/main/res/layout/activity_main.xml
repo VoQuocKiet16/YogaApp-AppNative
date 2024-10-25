@@ -1,142 +1,149 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
-    android:background="@drawable/background_login">
+    android:fillViewport="true">
 
-    <!-- Logout Icon -->
-    <ImageButton
-        android:id="@+id/btnLogout"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true"
-        android:layout_marginTop="1dp"
-        android:layout_marginEnd="5dp"
-        android:background="?android:selectableItemBackground"
-        android:contentDescription="Logout"
-        android:src="@drawable/ic_logout" />
-
-    <!-- Title Text -->
-    <TextView
-        android:id="@+id/title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="96dp"
-        android:text="Welcome to The New Yoga"
-        android:textColor="@color/md_theme_onPrimaryFixed"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:fontFamily="@font/pacifico_regular" />
-
-    <!-- Grid Layout for buttons (Courses, Classes, Accounts) -->
-    <GridLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/title"
-        android:layout_marginTop="40dp"
-        android:alignmentMode="alignMargins"
-        android:columnCount="2"
-        android:padding="16dp">
+        android:padding="16dp"
+        android:background="@drawable/background_login">
 
-        <!-- Manage Courses Button -->
-        <Button
-            android:id="@+id/btnManageCourses"
-            android:layout_width="0dp"
+        <!-- Logout Icon -->
+        <ImageButton
+            android:id="@+id/btnLogout"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="1dp"
+            android:layout_marginEnd="5dp"
+            android:background="?android:selectableItemBackground"
+            android:contentDescription="Logout"
+            android:src="@drawable/ic_logout" />
+
+        <!-- Title Text -->
+        <TextView
+            android:id="@+id/title"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_rowWeight="1"
-            android:layout_columnWeight="1"
-            android:layout_margin="8dp"
-            android:background="@drawable/button_background"
-            android:paddingLeft="16dp"
-            android:paddingTop="12dp"
-            android:paddingRight="16dp"
-            android:paddingBottom="12dp"
-            android:text="Manage Courses"
-            android:textColor="#FFFFFF"
-            android:textSize="18sp" />
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="96dp"
+            android:text="Welcome to The New Yoga"
+            android:textColor="@color/md_theme_onPrimaryFixed"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:fontFamily="@font/pacifico_regular" />
 
-        <!-- Manage Classes Button -->
-        <Button
-            android:id="@+id/btnManageClasses"
-            android:layout_width="0dp"
+        <!-- Grid Layout for buttons (Courses, Classes, Accounts) -->
+        <GridLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_rowWeight="1"
-            android:layout_columnWeight="1"
-            android:layout_margin="8dp"
-            android:background="@drawable/button_background"
-            android:paddingLeft="16dp"
-            android:paddingTop="12dp"
-            android:paddingRight="16dp"
-            android:paddingBottom="12dp"
-            android:text="Manage Classes"
-            android:textColor="#FFFFFF"
-            android:textSize="18sp" />
+            android:layout_below="@id/title"
+            android:layout_marginTop="40dp"
+            android:alignmentMode="alignMargins"
+            android:columnCount="2"
+            android:padding="16dp">
 
-        <!-- Manage Accounts Button -->
-        <Button
-            android:id="@+id/btnManageAccounts"
-            android:layout_width="0dp"
+            <!-- Manage Courses Button -->
+            <Button
+                android:id="@+id/btnManageCourses"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_rowWeight="1"
+                android:layout_columnWeight="1"
+                android:layout_margin="8dp"
+                android:background="@drawable/button_background"
+                android:paddingLeft="16dp"
+                android:paddingTop="12dp"
+                android:paddingRight="16dp"
+                android:paddingBottom="12dp"
+                android:text="Manage Courses"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp" />
+
+            <!-- Manage Classes Button -->
+            <Button
+                android:id="@+id/btnManageClasses"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_rowWeight="1"
+                android:layout_columnWeight="1"
+                android:layout_margin="8dp"
+                android:background="@drawable/button_background"
+                android:paddingLeft="16dp"
+                android:paddingTop="12dp"
+                android:paddingRight="16dp"
+                android:paddingBottom="12dp"
+                android:text="Manage Classes"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp" />
+
+            <!-- Manage Accounts Button -->
+            <Button
+                android:id="@+id/btnManageAccounts"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_rowWeight="1"
+                android:layout_columnWeight="1"
+                android:layout_margin="8dp"
+                android:background="@drawable/button_background"
+                android:paddingLeft="16dp"
+                android:paddingTop="12dp"
+                android:paddingRight="16dp"
+                android:paddingBottom="12dp"
+                android:text="Manage Accounts"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp" />
+
+            <!-- Manage Accounts Button -->
+            <Button
+                android:id="@+id/btnManageHistories"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_rowWeight="1"
+                android:layout_columnWeight="1"
+                android:layout_margin="8dp"
+                android:background="@drawable/button_background"
+                android:paddingLeft="16dp"
+                android:paddingTop="12dp"
+                android:paddingRight="16dp"
+                android:paddingBottom="12dp"
+                android:text="Manage Histories"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp" />
+
+            <!-- My Class Button -->
+            <Button
+                android:id="@+id/btnMyClass"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_rowWeight="1"
+                android:layout_columnWeight="1"
+                android:layout_margin="8dp"
+                android:background="@drawable/button_background"
+                android:paddingLeft="16dp"
+                android:paddingTop="12dp"
+                android:paddingRight="16dp"
+                android:paddingBottom="12dp"
+                android:text="My Class"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp" />
+        </GridLayout>
+
+        <!-- Footer Text -->
+        <TextView
+            android:id="@+id/footer"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_rowWeight="1"
-            android:layout_columnWeight="1"
-            android:layout_margin="8dp"
-            android:background="@drawable/button_background"
-            android:paddingLeft="16dp"
-            android:paddingTop="12dp"
-            android:paddingRight="16dp"
-            android:paddingBottom="12dp"
-            android:text="Manage Accounts"
-            android:textColor="#FFFFFF"
-            android:textSize="18sp" />
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:text="Namaste"
+            android:textSize="20sp"
+            android:textColor="@color/md_theme_onPrimary"
+            android:layout_marginBottom="30dp" />
 
-        <!-- Manage Accounts Button -->
-        <Button
-            android:id="@+id/btnManageHistories"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_rowWeight="1"
-            android:layout_columnWeight="1"
-            android:layout_margin="8dp"
-            android:background="@drawable/button_background"
-            android:paddingLeft="16dp"
-            android:paddingTop="12dp"
-            android:paddingRight="16dp"
-            android:paddingBottom="12dp"
-            android:text="Manage Histories"
-            android:textColor="#FFFFFF"
-            android:textSize="18sp" />
+    </RelativeLayout>
 
-        <!-- My Class Button -->
-        <Button
-            android:id="@+id/btnMyClass"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_rowWeight="1"
-            android:layout_columnWeight="1"
-            android:layout_margin="8dp"
-            android:background="@drawable/button_background"
-            android:paddingLeft="16dp"
-            android:paddingTop="12dp"
-            android:paddingRight="16dp"
-            android:paddingBottom="12dp"
-            android:text="My Class"
-            android:textColor="#FFFFFF"
-            android:textSize="18sp" />
-    </GridLayout>
-
-    <!-- Footer Text -->
-    <TextView
-        android:id="@+id/footer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:text="Namaste"
-        android:textSize="20sp"
-        android:textColor="@color/md_theme_onPrimary"
-        android:layout_marginBottom="30dp" />
-
-</RelativeLayout>
+</ScrollView>

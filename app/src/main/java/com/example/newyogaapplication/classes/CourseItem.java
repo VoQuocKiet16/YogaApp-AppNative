@@ -19,7 +19,7 @@ public class CourseItem {
 
     @Override
     public String toString() {
-        return courseName; // Để hiển thị tên khóa học trong Spinner
+        return courseName;
     }
 }
 

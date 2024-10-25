@@ -140,19 +140,103 @@ public class SyncWorker {
         }
     }
 
+//    private void syncClassesToFirebase() {
+//        List<YogaClass> classesInSQLite = classDbHelper.getAllYogaClasses();
+//        for (YogaClass yogaClass : classesInSQLite) {
+//            if (yogaClass.getFirebaseKey() == null || yogaClass.getFirebaseKey().isEmpty()) {
+//                String firebaseKey = classRef.push().getKey();
+//                yogaClass.setFirebaseKey(firebaseKey);
+//                classRef.child(firebaseKey).setValue(yogaClass);
+//                classDbHelper.updateYogaClass(yogaClass);
+//            } else {
+//                classRef.child(yogaClass.getFirebaseKey()).setValue(yogaClass);
+//            }
+//        }
+//    }
+
+
+
     private void syncClassesToFirebase() {
+        // Lấy tất cả các class từ SQLite
         List<YogaClass> classesInSQLite = classDbHelper.getAllYogaClasses();
-        for (YogaClass yogaClass : classesInSQLite) {
-            if (yogaClass.getFirebaseKey() == null || yogaClass.getFirebaseKey().isEmpty()) {
-                String firebaseKey = classRef.push().getKey();
-                yogaClass.setFirebaseKey(firebaseKey);
-                classRef.child(firebaseKey).setValue(yogaClass);
-                classDbHelper.updateYogaClass(yogaClass);
-            } else {
-                classRef.child(yogaClass.getFirebaseKey()).setValue(yogaClass);
+
+        // Truy vấn tất cả các class từ Firebase
+        classRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    YogaClass yogaClassInFirebase = snapshot.getValue(YogaClass.class);
+
+                    if (yogaClassInFirebase != null) {
+                        // Kiểm tra xem class này có tồn tại trong SQLite hay không
+                        YogaClass classInSQLite = classDbHelper.getYogaClass(yogaClassInFirebase.getId());
+
+                        // Nếu class không tồn tại trong SQLite, xóa class khỏi Firebase
+                        if (classInSQLite == null) {
+                            snapshot.getRef().removeValue().addOnCompleteListener(task -> {
+                                if (task.isSuccessful()) {
+                                    Toast.makeText(context, "Class deleted from Firebase", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+                    }
+                }
+
+                // Sau khi đã xử lý các class còn tồn tại trên Firebase, tiếp tục đồng bộ các class từ SQLite lên Firebase
+                for (YogaClass yogaClass : classesInSQLite) {
+                    // Chỉ đồng bộ những class có `synced = false`
+                    if (!yogaClass.isSynced()) {
+                        if (yogaClass.getFirebaseKey() == null || yogaClass.getFirebaseKey().isEmpty()) {
+                            // Tạo FirebaseKey nếu chưa có
+                            String firebaseKey = classRef.push().getKey();
+                            yogaClass.setFirebaseKey(firebaseKey);
+
+                            // Đồng bộ dữ liệu class lên Firebase
+                            classRef.child(firebaseKey).setValue(yogaClass).addOnCompleteListener(task -> {
+                                if (task.isSuccessful()) {
+                                    // Cập nhật trạng thái `synced = true` trong SQLite và Firebase
+                                    yogaClass.setSynced(true);  // Cập nhật trong SQLite
+                                    classDbHelper.updateYogaClass(yogaClass);  // Lưu lại trong SQLite
+
+                                    // Cập nhật giá trị `synced` trên Firebase
+                                    classRef.child(firebaseKey).child("synced").setValue(true);
+
+                                    Toast.makeText(context, "Class synced to Firebase successfully", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(context, "Failed to sync class to Firebase", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        } else {
+                            // Đồng bộ lại nếu đã có FirebaseKey
+                            classRef.child(yogaClass.getFirebaseKey()).setValue(yogaClass).addOnCompleteListener(task -> {
+                                if (task.isSuccessful()) {
+                                    // Cập nhật trạng thái `synced = true` trong SQLite và Firebase
+                                    yogaClass.setSynced(true);  // Cập nhật trong SQLite
+                                    classDbHelper.updateYogaClass(yogaClass);  // Lưu lại trong SQLite
+
+                                    // Cập nhật giá trị `synced` trên Firebase
+                                    classRef.child(yogaClass.getFirebaseKey()).child("synced").setValue(true);
+
+                                    Toast.makeText(context, "Class updated in Firebase successfully", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(context, "Failed to update class in Firebase", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+                    }
+                }
             }
-        }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Toast.makeText(context, "Failed to sync classes to Firebase", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
+
+
+
+
 
     private void syncUsersToFirebase() {
         List<YogaUser> usersInSQLite = userDbHelper.getAllUsers();
@@ -168,5 +252,4 @@ public class SyncWorker {
         }
     }
 
-    // Sync histories from SQLite to Firebase
 }

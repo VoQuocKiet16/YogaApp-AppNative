@@ -22,6 +22,7 @@ import com.example.newyogaapplication.R;
 import com.example.newyogaapplication.adapters.YogaCourseAdapter;
 import com.example.newyogaapplication.classes.YogaCourse;
 import com.example.newyogaapplication.database.YogaCourseDB;
+import com.example.newyogaapplication.sync.SyncManager;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -51,6 +52,11 @@ public class ManageCoursesActivity extends AppCompatActivity {
         syncFirebaseWithSQLite();
         setupRecyclerView();
         setupAddCourseButton();
+        setupDeleteAllButton();
+
+        // Start sync process using SyncManager
+        SyncManager syncManager = new SyncManager(this);
+        syncManager.startSyncing();
     }
 
     private void initFirebase() {
@@ -280,6 +286,37 @@ public class ManageCoursesActivity extends AppCompatActivity {
                 Toast.makeText(ManageCoursesActivity.this, "Failed to add course to SQLite", Toast.LENGTH_SHORT).show();
             }
         }
+    }
+
+    private void setupDeleteAllButton() {
+        Button btnDeleteAllCourses = findViewById(R.id.btnDeleteAllCourses);
+        btnDeleteAllCourses.setOnClickListener(v -> showDeleteAllConfirmation());
+    }
+
+    private void showDeleteAllConfirmation() {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete All Courses")
+                .setMessage("Are you sure you want to delete all courses?")
+                .setPositiveButton("Delete", (dialog, which) -> deleteAllCourses())
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .create().show();
+    }
+
+    private void deleteAllCourses() {
+        // Xoá tất cả khoá học trong SQLite
+        courseDbHelper.deleteAllYogaCourses();
+        courseList.clear();
+        adapter.notifyDataSetChanged();
+        Toast.makeText(this, "All courses deleted from SQLite", Toast.LENGTH_SHORT).show();
+
+        // Xoá tất cả khoá học trong Firebase
+        courseRef.removeValue().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                Toast.makeText(this, "All courses deleted from Firebase", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Failed to delete courses from Firebase", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
 
